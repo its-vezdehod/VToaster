@@ -1,0 +1,17 @@
+name: VToaster
+description: Make some toasts!
+version: 1.0.0-PoC
+author: m.vezdehod
+
+api: [4.0.0]
+main: vezdehod\toaster\VToasterMain
+
+commands:
+  toast:
+    description: send toast
+    permission: vtoaster.toast
+    usage: /toast <channel> message [-h <header>] [-s] [-n]
+permissions:
+  vtoaster.toast:
+    description: use /toast
+    default: op
