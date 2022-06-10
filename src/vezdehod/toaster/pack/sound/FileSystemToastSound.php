@@ -11,11 +11,14 @@ use const PATHINFO_BASENAME;
 
 class FileSystemToastSound extends ToastSound {
 
-    public function __construct(private string $file) {
+    private $file;
+
+    public function __construct(/*private*/ string $file) {
+        $this->file = $file;
         parent::__construct(sprintf(self::SOUND_DEFINITION_NAME, md5_file($this->file)));
     }
 
-    public function resolveLocalResource(): ?LocalResource {
+    public function resolveLocalResource()/*: ?LocalResource */{
         $this->file = (new FileSystemResourceResolver($this->file, self::SUPPORTED_TYPES))->resolve();
         $name = pathinfo($this->file, PATHINFO_BASENAME);
         return new LocalResource(

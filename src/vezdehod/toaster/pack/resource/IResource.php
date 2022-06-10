@@ -6,7 +6,8 @@ use Exception;
 
 interface IResource {
     /**
+     * @return LocalResource|null
      * @throws Exception
      */
-    public function resolveLocalResource(): ?LocalResource;
+    public function resolveLocalResource()/*: ?LocalResource*/;
 }

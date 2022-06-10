@@ -3,7 +3,7 @@ description: Make some toasts!
 version: 1.0.0-PoC
 author: m.vezdehod
 
-api: [4.0.0]
+api: [3.0.0]
 main: vezdehod\toaster\VToasterMain
 
 commands:

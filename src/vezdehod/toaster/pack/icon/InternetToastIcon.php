@@ -10,14 +10,15 @@ use const PATHINFO_BASENAME;
 
 class InternetToastIcon extends ToastIcon {
 
-    private string $pack;
+    private /*string*/ $pack;
+    private $url;
 
-    public function __construct(private string $url) { }
+    public function __construct(/*private*/ string $url) { $this->url = $url; }
 
-    public function resolveLocalResource(): ?LocalResource {
+    public function resolveLocalResource()/*: ?LocalResource */{
         $file = (new InternetResourceResolver($this->url, self::SUPPORTED_TYPES))->resolve();
-        $name = pathinfo($file, PATHINFO_BASENAME);
-        return new LocalResource($file, $this->pack = sprintf(self::TEXTURE_RESOURCE_PATH, $name));
+        $parts = pathinfo($file);
+        return new LocalResource($file, ($this->pack = sprintf(self::TEXTURE_RESOURCE_PATH, $parts['filename'])) . "." . $parts['extension']);
     }
 
     public function getPackPath(): string { return $this->pack; }

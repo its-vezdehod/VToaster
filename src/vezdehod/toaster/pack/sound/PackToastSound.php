@@ -7,5 +7,5 @@ use vezdehod\toaster\pack\resource\LocalResource;
 
 class PackToastSound extends ToastSound {
 
-    public function resolveLocalResource(): ?LocalResource { return null; }
+    public function resolveLocalResource()/*: ?LocalResource*/ { return null; }
 }

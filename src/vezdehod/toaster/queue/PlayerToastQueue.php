@@ -2,21 +2,23 @@
 
 namespace vezdehod\toaster\queue;
 
-use pocketmine\player\Player;
+use pocketmine\/*player\*/Player;
 use SplQueue;
 use function time;
 
 class PlayerToastQueue {
 
     /** @var SplQueue<QueuedToast> */
-    private SplQueue $queue;
-    private ?int $nextQueue = null;
+    private /*SplQueue */$queue;
+    private /*?int*/ $nextQueue = null;
+    private $player;
 
-    public function __construct(private Player $player) {
+    public function __construct(/*private*/ Player $player) {
+        $this->player = $player;
         $this->queue = new SplQueue();
     }
 
-    public function enqueue(QueuedToast $toast): void {
+    public function enqueue(QueuedToast $toast)/*: void*/ {
         $this->queue->enqueue($toast);
         if ($this->nextQueue === null) {
             $this->nextQueue = time();

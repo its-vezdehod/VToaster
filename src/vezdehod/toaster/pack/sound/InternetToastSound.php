@@ -11,11 +11,14 @@ use const PATHINFO_BASENAME;
 
 class InternetToastSound extends ToastSound {
 
-    public function __construct(private string $url) {
+    private $url;
+
+    public function __construct(/*private*/ string $url) {
+        $this->url = $url;
         parent::__construct(sprintf(self::SOUND_DEFINITION_NAME, md5($this->url)));
     }
 
-    public function resolveLocalResource(): ?LocalResource {
+    public function resolveLocalResource()/*: ?LocalResource */{
         $file = (new InternetResourceResolver($this->url, self::SUPPORTED_TYPES))->resolve();
         $name = pathinfo($file, PATHINFO_BASENAME);
         return new LocalResource($file, sprintf(self::SOUND_RESOURCE_PATH, $name));
