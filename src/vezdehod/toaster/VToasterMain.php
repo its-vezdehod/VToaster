@@ -132,8 +132,12 @@ class VToasterMain extends PluginBase {
             }
         }
 
+        if ($message === null) {
+            return false;
+        }
+
         $header = implode(" ", $args);
-        $message = $message === null || count($message) === 0 ? null : implode(" ", $message);
+        $message = implode(" ", $message);
         match (true) {
             $silent && $immediately => $toast->sendSilent($target, $header, $message),
             $silent && !$immediately => $toast->enqueueSilent($target, $header, $message),
