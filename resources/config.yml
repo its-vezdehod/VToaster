@@ -1,0 +1,11 @@
+toasts:
+  default:
+    icon: textures/ui/infobulb.png
+    sound: random.toast
+  error:
+    # ./ equals plugin_data/VToaster/
+    icon: ./error.png
+    sound: ./error.ogg
+  warning:
+    icon: https://files.softicons.com/download/internet-icons/3d-ii-icons-by-la-glanz-studio/png/256/warning.png
+    sound: https://bigsoundbank.com/UPLOAD/ogg/2380.ogg

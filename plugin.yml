@@ -10,7 +10,7 @@ commands:
   toast:
     description: send toast
     permission: vtoaster.toast
-    usage: /toast <channel> message [-h <header>] [-s] [-n]
+    usage: "/toast <target> <toast> <...header> -m <...message> [-s: silent?] [-n: now?]"
 permissions:
   vtoaster.toast:
     description: use /toast
