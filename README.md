@@ -6,7 +6,7 @@ Resource pack is generated in bootstrap time.
 
 At the moment, this is proof of concept, so I don't give a shit about BC 
 
-# How to use it?
+# How to create my own toast and use it?
 
 ```yaml
 # plugin.yml

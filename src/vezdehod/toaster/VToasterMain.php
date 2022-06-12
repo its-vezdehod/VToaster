@@ -7,8 +7,6 @@ use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerQuitEvent;
-use pocketmine\/*player\*/Player;
-use pocketmine\math\Vector3;
 use pocketmine\plugin\PluginBase;
 use pocketmine\resourcepacks\ResourcePack;
 use pocketmine\scheduler\Task;
@@ -30,18 +28,15 @@ class VToasterMain extends PluginBase {
     private /*GlobalToastQueue */
         $queue;
 
-    private /*Toast*/
-        $default;
-    private /*Toast*/
-        $error;
-    private /*Toast*/
-        $warning;
+    /** @var array<string, Toast> */
+    private $toasts = [];
 
     /**
      * @throws Exception
      */
     /*protected*/
     public function onLoad()/*: void*/ {
+        $this->saveResource('config.yml');
         $this->saveResource("toast-background-slice.json");
         $this->saveResource("toast-background-slice.png");
         $this->saveResource("error.ogg");
@@ -50,18 +45,24 @@ class VToasterMain extends PluginBase {
         $this->queue = new GlobalToastQueue();
         ToastFactory::setFactory(function (ToastOptions $options) { return new Toast($options->getSoundFactory(), $options->getFlag(), $this->queue); });
 
-
-        $this->default = ToastFactory::create(ToastOptions::create($this, 'default')
-            ->defaultIcon("textures/items/diamond_sword")
-            ->soundOf(ClickSound::class));
-
-        $this->error = ToastFactory::create(ToastOptions::create($this, 'error')
-            ->fileIcon($this->getDataFolder() . "error.png")
-            ->soundOf(AnvilFallSound::class));
-
-        $this->warning = ToastFactory::create(ToastOptions::create($this, 'warning')
-            ->downloadIcon("https://files.softicons.com/download/internet-icons/3d-ii-icons-by-la-glanz-studio/png/256/warning.png")
-            ->soundOf(BlazeShootSound::class));
+        foreach ($this->getConfig()->get("toasts") as $toast => $rawOptions) {
+            $options = ToastOptions::create($this, $toast);
+            if (isset($rawOptions['icon'])) {
+                $icon = $rawOptions['icon'];
+                if (str_starts_with($icon, "./")) {
+                    $options->fileIcon($this->getDataFolder() . mb_substr($icon, 2));
+                } else if (str_starts_with($icon, "http")) {
+                    $options->downloadIcon($icon);
+                } else {
+                    $options->defaultIcon($icon);
+                }
+            }
+            if (isset($rawOptions['sound'])) {
+                $options->soundOf("\\pocketmine\\level\\sound\\$rawOptions[sound]");
+            }
+            //TODO: Animations, background
+            $this->toasts[$toast] = ToastFactory::create($options);
+        }
     }
 
     /*protected*/
@@ -103,23 +104,25 @@ class VToasterMain extends PluginBase {
         }, $this);
     }
 
-    public function onCommand(CommandSender $sender, Command $command, $label, array $args): bool {
-        if (!($sender instanceof Player)) {
-            return true;
-        }
+    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool {
         if (count($args) < 3) {
             return false;
         }
 
-        if (($toastStr = array_shift($args)) === "error") {
-            $toast = $this->error;
-        } else if ($toastStr === "warning") {
-            $toast = $this->warning;
-        } else {
-            $toast = $this->default;
+        $target = $this->getServer()->getPlayerByPrefix(array_shift($args));
+        if ($target === null) {
+            $sender->sendMessage("Player not found!");
+            return true;
         }
 
-        $header = null;
+        $toast = $this->toasts[array_shift($args)] ?? null;
+        if ($toast === null) {
+            $sender->sendMessage("Toast not found! Available toasts: " . implode(", ", array_keys($this->toasts)));
+            return true;
+        }
+
+
+        $message = null;
         $silent = false;
         $immediately = false;
         foreach ($args as $i => $arg) {
@@ -129,35 +132,36 @@ class VToasterMain extends PluginBase {
             } else if ($arg === "-n") {
                 $immediately = true;
                 unset($args[$i]);
-            } else if ($arg === "-h") {
-                $header = [];
+            } else if ($arg === "-m") {
+                $message = [];
                 unset($args[$i]);
-            } else if (is_array($header)) {
-                $header[] = $arg;
+            } else if (is_array($message)) {
+                $message[] = $arg;
                 unset($args[$i]);
             }
         }
 
-        $header = $header === null || count($header) === 0 ? null : implode(" ", $header);
-        $message = implode(" ", $args);
+        $header = implode(" ", $args);
+        $message = $message === null || count($message) === 0 ? null : implode(" ", $message);
         switch (true) {
             case $silent && $immediately:
-                $toast->sendSilent($sender, $header, $message);
+                $toast->sendSilent($target, $header, $message);
                 break;
             case $silent && !$immediately:
-                $toast->enqueueSilent($sender, $header, $message);
+                $toast->enqueueSilent($target, $header, $message);
                 break;
             case !$silent && $immediately:
-                $toast->send($sender, $header, $message);
+                $toast->send($target, $header, $message);
                 break;
             case!$silent && !$immediately:
-                $toast->enqueue($sender, $header, $message);
+                $toast->enqueue($target, $header, $message);
                 break;
         }
+        $sender->sendMessage("Toast successfully " . ($immediately ? "sent" : "enqueued")  . " to {$target->getName()} " . ($silent ? "(without sound)" : ""));
         return true;
     }
 
-    private function injectPack(ResourcePack $pack)/*: void*/ {
+    private function injectPack(ResourcePack $pack): void {
         $manager = $this->getServer()->getResourcePackManager();
         $reflection = new ReflectionClass($manager);
 
