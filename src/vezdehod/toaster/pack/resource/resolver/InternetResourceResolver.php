@@ -36,8 +36,7 @@ use const CURLOPT_SSL_VERIFYHOST;
 use const CURLOPT_SSL_VERIFYPEER;
 use const CURLOPT_TIMEOUT;
 
-class InternetResourceResolver implements IResourceResolver
-{
+class InternetResourceResolver implements IResourceResolver {
     private $url;
     private $mimes;
 
@@ -48,15 +47,13 @@ class InternetResourceResolver implements IResourceResolver
         /*private*/ string $url,
         /*private*/ array  $mimes
         //TODO: Custom HTTP client?
-    )
-    {
+    ) {
         $this->mimes = $mimes;
         $this->url = $url;
 
     }
 
-    public function resolve(): string
-    {
+    public function resolve(): string {
         $ch = curl_init($this->url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ["User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0 PocketMine-MP"]);
         curl_setopt($ch, CURLOPT_AUTOREFERER, true);
@@ -67,22 +64,22 @@ class InternetResourceResolver implements IResourceResolver
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_TIMEOUT,  10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_HEADER, true);
-        try{
+        try {
             $raw = curl_exec($ch);
-            if($raw === false){
+            if ($raw === false) {
                 throw new /*Internet*/ Exception("Failed to fetch resource " . $this->url . ":" . curl_error($ch));
             }
             $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
             $rawHeaders = substr($raw, 0, $headerSize);
             $body = substr($raw, $headerSize);
             $headers = [];
-            foreach(explode("\r\n\r\n", $rawHeaders) as $rawHeaderGroup){
+            foreach (explode("\r\n\r\n", $rawHeaders) as $rawHeaderGroup) {
                 $headerGroup = [];
-                foreach(explode("\r\n", $rawHeaderGroup) as $line){
+                foreach (explode("\r\n", $rawHeaderGroup) as $line) {
                     $nameValue = explode(":", $line, 2);
-                    if(isset($nameValue[1])){
+                    if (isset($nameValue[1])) {
                         $headerGroup[trim(strtolower($nameValue[0]))] = trim($nameValue[1]);
                     }
                 }
@@ -104,7 +101,7 @@ class InternetResourceResolver implements IResourceResolver
             $fileName = sys_get_temp_dir() . "/" . md5($this->url) . "." . $this->mimes[$mime];
             file_put_contents($fileName, $body);
             return $fileName;
-        }finally{
+        } finally {
             curl_close($ch);
         }
     }
