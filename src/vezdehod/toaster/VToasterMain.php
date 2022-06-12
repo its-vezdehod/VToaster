@@ -105,7 +105,7 @@ class VToasterMain extends PluginBase {
     }
 
     public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool {
-        if (count($args) < 3) {
+        if (count($args) < 4) {
             return false;
         }
 
@@ -139,6 +139,10 @@ class VToasterMain extends PluginBase {
                 $message[] = $arg;
                 unset($args[$i]);
             }
+        }
+
+        if ($message === null) {
+            return false;
         }
 
         $header = implode(" ", $args);
