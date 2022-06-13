@@ -1,12 +1,12 @@
 <?php
 
-namespace vezdehod\toaster\pack\resource\resolver;
+namespace vezdehod\toaster\pack\resource;
 
 use Exception;
 
 //use pocketmine\utils\Internet;
 //use pocketmine\utils\InternetException;
-use vezdehod\toaster\pack\resource\resolver\exception\InvalidMimeTypeException;
+use vezdehod\toaster\pack\resource\exception\InvalidMimeTypeException;
 use function array_keys;
 use function curl_close;
 use function curl_error;
@@ -36,10 +36,10 @@ use const CURLOPT_SSL_VERIFYHOST;
 use const CURLOPT_SSL_VERIFYPEER;
 use const CURLOPT_TIMEOUT;
 
-class InternetResourceResolver implements IResourceResolver {
+class InternetResource implements IResource {
+    //TODO: Refactor this
     private $url;
     private $mimes;
-
     /**
      * @param array<string, string> $mimes mime=>extension
      */
@@ -53,7 +53,7 @@ class InternetResourceResolver implements IResourceResolver {
 
     }
 
-    public function resolve(): string {
+    public function fetch()/*: void*/ {
         $ch = curl_init($this->url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ["User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0 PocketMine-MP"]);
         curl_setopt($ch, CURLOPT_AUTOREFERER, true);
@@ -98,11 +98,18 @@ class InternetResourceResolver implements IResourceResolver {
             if (!isset($this->mimes[$mime = strtolower($mime)])) {
                 throw new InvalidMimeTypeException("Excepted " . implode("|", array_keys($this->mimes)) . ", got $mime");
             }
-            $fileName = sys_get_temp_dir() . "/" . md5($this->url) . "." . $this->mimes[$mime];
-            file_put_contents($fileName, $body);
-            return $fileName;
+            $this->file = sys_get_temp_dir() . "/" . md5($this->url) . "." . $this->mimes[$mime];
+            file_put_contents($this->file, $result->getBody());
         } finally {
             curl_close($ch);
         }
+    }
+
+    public function getLocalFile()/*: ?string*/ {
+        return $this->file;
+    }
+
+    public function getInPackUsageName()/*: string*/ {
+        return $this->inPackName;
     }
 }

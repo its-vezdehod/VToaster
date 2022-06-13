@@ -10,9 +10,6 @@ use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\plugin\PluginBase;
 use pocketmine\resourcepacks\ResourcePack;
 use pocketmine\scheduler\Task;
-use pocketmine\level\sound\AnvilFallSound;
-use pocketmine\level\sound\BlazeShootSound;
-use pocketmine\level\sound\ClickSound;
 use ReflectionClass;
 use Throwable;
 use vezdehod\toaster\pack\RuntimePackBuilder;
@@ -122,31 +119,16 @@ class VToasterMain extends PluginBase {
         }
 
 
-        $message = null;
-        $silent = false;
-        $immediately = false;
-        foreach ($args as $i => $arg) {
-            if ($arg === "-s") {
-                $silent = true;
-                unset($args[$i]);
-            } else if ($arg === "-n") {
-                $immediately = true;
-                unset($args[$i]);
-            } else if ($arg === "-m") {
-                $message = [];
-                unset($args[$i]);
-            } else if (is_array($message)) {
-                $message[] = $arg;
-                unset($args[$i]);
-            }
-        }
-
-        if ($message === null) {
+        $silent = in_array("-s", $args, true);
+        $immediately = in_array("-n", $args, true);
+        $args = array_filter($args, static fn($arg) => $arg !== "-s" && $arg !== "-n");
+        $messageIdx = array_search("-m", $args, true);
+        if ($messageIdx === false) {
             return false;
         }
+        $header = implode(" ", array_slice($args, 0, $messageIdx));
+        $message = implode(" ", array_slice($args, $messageIdx + 1));
 
-        $header = implode(" ", $args);
-        $message = $message === null || count($message) === 0 ? null : implode(" ", $message);
         switch (true) {
             case $silent && $immediately:
                 $toast->sendSilent($target, $header, $message);

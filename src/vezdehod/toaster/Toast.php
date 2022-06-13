@@ -34,7 +34,7 @@ class Toast {
     }
 
     public function send(Player $player, string $header, string $message)/*: void*/ {
-        $this->sendSilent($player, $message, $header);
+        $this->sendSilent($player, $header, $message);
         $player->getLevel()->addSound(($this->sound)($player->getPosition()), [$player]);
     }
 

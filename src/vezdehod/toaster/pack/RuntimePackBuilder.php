@@ -17,6 +17,7 @@ use function unlink;
 use const JSON_PRETTY_PRINT;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
+use const PATHINFO_EXTENSION;
 
 class RuntimePackBuilder {
 
@@ -25,6 +26,7 @@ class RuntimePackBuilder {
     /*private*/
     const UUID_RESOURCE_NAMESPACE = 'ae26160e-ced6-4467-9a91-a52e6172dc0b';
 
+    //TODO: Split this to something like jsonui-builder
     /*private*/
     const TOAST_COMPONENT_NAME = 'vezdehodui_toast_component';
     /*private*/
@@ -36,16 +38,18 @@ class RuntimePackBuilder {
     /*private*/
     const FADE_OUT_ANIMATION_NAME = 'vezdehodui_toast_anim_fade_out';
 
+    /*private*/
+    const ICON_PATH = "textures/vezdehodui/toast/icons/";
+    /*private*/
+    const SOUND_PATH = "sounds/vezdehodui/toast/";
+    /*private*/
+    const BACKGROUND_SLICE = "textures/vezdehodui/toast/background-slice";
+
     private /*ZipArchive*/
         $archive;
     private /*string*/
         $checksumSource = '';
 
-    /** @var ToastSound[] */
-    private /*array*/
-        $sounds = [];
-    private /*array*/
-        $icons = [];
     /** @var ToastOptions[] */
     private /*array*/
         $toasts = [];
@@ -62,7 +66,7 @@ class RuntimePackBuilder {
         $this->archive = new ZipArchive();
         $this->archive->open($this->path, ZipArchive::CREATE);
 
-        $this->addFile("textures/vezdehodui/toast/background-slice.png", $background);
+        $this->addFile(self::BACKGROUND_SLICE . "." . pathinfo($background, PATHINFO_EXTENSION), $background);
 //        $this->addFile("textures/vezdehodui/toast/background-slice.json", $backgroundSlice);
         $this->backgroundSlice = json_decode(file_get_contents($backgroundSlice), true);
     }
@@ -74,35 +78,29 @@ class RuntimePackBuilder {
     public function addToast(ToastOptions $toast)/*: void*/ {
         $this->toasts[] = $toast;
 
-        $resource = $toast->getIcon()->resolveLocalResource();
-        if ($resource !== null) {
-            $this->addResource($resource);
-            $parts = pathinfo($resource->getPackPath());
-            $this->icons[] = $parts['dirname'] . "/" . $parts['filename'];
-        }
+        /** @var IResource $resource */
+        foreach ([
+                     self::ICON_PATH => $toast->getIcon(),
+                 ] as $path => $resource) {
+            $resource->fetch();
 
-        $resource = $toast->getSound()->resolveLocalResource();
-        if ($resource !== null) {
-            $this->addResource($resource);
-            $parts = pathinfo($resource->getPackPath());
-            $this->sounds[$toast->getSound()->getName()] = ['category' => 'player', 'sounds' => [$parts['dirname'] . "/" . $parts['filename']]];
+            $localFile = $resource->getLocalFile();
+            if ($localFile === null) {
+                continue;
+            }
+            $target = $toast->getPlugin()->getName() . "_" . $toast->getName() . "." . pathinfo($localFile, PATHINFO_EXTENSION);
+            $this->addFile($path . $target, $localFile);
         }
     }
 
     public function generate(): ResourcePack {
-        $this->injectSoundDefinitions();
-        $this->injectTextures();
         $this->injectJSONUI();
         $this->injectManifest();
         $this->archive->close();
         return new ZippedResourcePack($this->path);
     }
 
-    private function addResource(LocalResource $resource)/*: void */ {
-        $this->addFile($resource->getPackPath(), $resource->getLocalPath());
-    }
-
-    private function addFile(string $archive, string $local)/*: void*/ {
+    private function addFile(string $archive, string $local): void {
         $this->archive->addFile($local, $archive);
         $this->checksumSource .= md5_file($local);
     }
@@ -130,15 +128,7 @@ class RuntimePackBuilder {
                     'version' => [1, 0, 0],
                 ],
             ],
-        ], JSON_PRETTY_PRINT));
-    }
-
-    private function injectSoundDefinitions()/*: void*/ {
-        $this->addFileContent("sounds/sound_definitions.json", json_encode($this->sounds, JSON_UNESCAPED_SLASHES));
-    }
-
-    private function injectTextures()/*:void*/ {
-        $this->addFileContent("textures/textures_list.json", json_encode($this->icons, JSON_UNESCAPED_SLASHES));
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
     //TODO: animations, background, position
@@ -183,14 +173,15 @@ class RuntimePackBuilder {
         ];
     }
 
-    private function createToast(): array {
+    private function createToast(): array {//TODO: This should returns conditional-rendering style selector
         $details = [];
         $details['type'] = 'image';
-        $details['texture'] = 'textures/vezdehodui/toast/background-slice';
+        $details['texture'] = self::BACKGROUND_SLICE;
         $details['uv'] = [0, 0];
         $details['nineslice_size'] = $this->backgroundSlice['nineslice_size'];
         $details['uv_size'] = $this->backgroundSlice['base_size'];
         $details['inherit_max_sibling_width'] = true;
+        $details['min_size'] = [128, 32];
         $details['anchor_from'] = "top_right";
         $details['anchor_to'] = "top_right";
         $details['size'] = ["100%c + 10px", 32];
@@ -200,12 +191,15 @@ class RuntimePackBuilder {
         $details['controls'] = [];
 
         foreach ($this->toasts as $toast) {
-            $details['controls'][] = [
-                $toast->getName() . '@' . self::ICON_COMPONENT_NAME => [
-                    '$icon' => $toast->getIcon()->getPackPath(),
-                    'ignored' => "(\$actionbar_text = (\$actionbar_text - '{$toast->getFlag()}'))",
-                    'offset' => [3, 0],
-                ],
+            $texture = $toast->getIcon()->getInPackUsageName();
+            $localFile = $toast->getIcon()->getLocalFile();
+            if ($localFile !== null) {
+                $texture = self::ICON_PATH . $toast->getPlugin()->getName() . "_" . $toast->getName() . "." . pathinfo($localFile, PATHINFO_EXTENSION);
+            }
+            $details['controls'][] = $toast->getName() . '@' . self::ICON_COMPONENT_NAME => [
+                '$icon' => $texture,
+                'ignored' => "(\$actionbar_text = (\$actionbar_text - '{$toast->getFlag()}'))",
+                'offset' => [3, 0],
             ];
         }
 
@@ -232,6 +226,8 @@ class RuntimePackBuilder {
             self::TOAST_COMPONENT_NAME => $details,
         ];
     }
+
+    //TODO: Animations, background, position
 
     private function createFadeInAnimation(): array {
         $details = [];

@@ -6,8 +6,11 @@ use Exception;
 
 interface IResource {
     /**
-     * @return LocalResource|null
      * @throws Exception
      */
-    public function resolveLocalResource()/*: ?LocalResource*/;
+    public function fetch()/*: void*/;
+
+    public function getLocalFile()/*: ?string*/;
+
+    public function getInPackUsageName()/*: string*/;
 }
