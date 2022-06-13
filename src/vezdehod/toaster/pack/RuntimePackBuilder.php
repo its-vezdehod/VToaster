@@ -41,7 +41,7 @@ class RuntimePackBuilder {
     /*private*/
     const ICON_PATH = "textures/vezdehodui/toast/icons/";
     /*private*/
-    const SOUND_PATH = "sounds/vezdehodui/toast/";
+ const SOUND_PATH = "sounds/vezdehodui/toast/";
     /*private*/
     const BACKGROUND_SLICE = "textures/vezdehodui/toast/background-slice";
 
@@ -52,7 +52,7 @@ class RuntimePackBuilder {
 
     /** @var ToastOptions[] */
     private /*array*/
-        $toasts = [];
+       $toasts = [];
     private $path;
     private $backgroundSlice;
 
@@ -196,11 +196,11 @@ class RuntimePackBuilder {
             if ($localFile !== null) {
                 $texture = self::ICON_PATH . $toast->getPlugin()->getName() . "_" . $toast->getName() . "." . pathinfo($localFile, PATHINFO_EXTENSION);
             }
-            $details['controls'][] = $toast->getName() . '@' . self::ICON_COMPONENT_NAME => [
+            $details['controls'][] = [$toast->getName() . '@' . self::ICON_COMPONENT_NAME => [
                 '$icon' => $texture,
                 'ignored' => "(\$actionbar_text = (\$actionbar_text - '{$toast->getFlag()}'))",
                 'offset' => [3, 0],
-            ];
+            ]];
         }
 
         $details['controls'][] = [
