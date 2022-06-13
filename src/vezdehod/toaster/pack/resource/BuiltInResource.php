@@ -3,8 +3,8 @@
 namespace vezdehod\toaster\pack\resource;
 
 class BuiltInResource implements IResource {
-
-    public function __construct(private string $inPackName) { }
+    private $inPackName;
+    public function __construct(string $inPackName) { $this->inPackName = $inPackName; }
 
     public function fetch(): void { }
 

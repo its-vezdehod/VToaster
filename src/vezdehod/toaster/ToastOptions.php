@@ -24,16 +24,15 @@ use const STR_PAD_LEFT;
 class ToastOptions {
 
     /*private*/ const ICON_SUPPORTED_TYPES = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png'
-    ];
+    'image/jpeg' => 'jpg',
+    'image/png' => 'png'
+];
 
     /*private*/ const SOUND_SUPPORTED_TYPES = [
-        'audio/ogg' => 'ogg'
-    ];
+    'audio/ogg' => 'ogg'
+];
 
     /*private*/ const ICON_NAME = "%s-%s";
-    /*private*/ const SOUND_NAME = "vtoaster.%s.%s";
     /*private*/ const MIN_FLAG_LENGTH = 20;
 
 
@@ -61,8 +60,8 @@ class ToastOptions {
         $this->name = $name;
         $this->plugin = $plugin;
         $this->flag = self::generateFlag($this->plugin->getName() . $this->name);
-        $this->icon = new BuiltInResource("textures/ui/infobulb.png");
-        $this->sound = function(Vector3 $pos) { new ClickSound(); }; //new PackToastSound("random.toast");
+        $this->icon = new BuiltInResource("textures/gui/newgui/ChainSquare.png");
+        $this->sound = function(Vector3 $pos) { new ClickSound($pos); }; //new PackToastSound("random.toast");
     }
 
     public function getPlugin(): Plugin { return $this->plugin; }

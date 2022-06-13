@@ -5,11 +5,12 @@ namespace vezdehod\toaster\pack;
 use Exception;
 use pocketmine\resourcepacks\ResourcePack;
 use pocketmine\resourcepacks\ZippedResourcePack;
-use vezdehod\toaster\pack\resource\LocalResource;
-use vezdehod\toaster\pack\sound\ToastSound;
+use vezdehod\toaster\pack\resource\IResource;
 use vezdehod\toaster\ToastOptions;
 use ZipArchive;
 use function array_merge;
+use function file_get_contents;
+use function json_decode;
 use function json_encode;
 use function md5_file;
 use function pathinfo;
@@ -41,8 +42,6 @@ class RuntimePackBuilder {
     /*private*/
     const ICON_PATH = "textures/vezdehodui/toast/icons/";
     /*private*/
- const SOUND_PATH = "sounds/vezdehodui/toast/";
-    /*private*/
     const BACKGROUND_SLICE = "textures/vezdehodui/toast/background-slice";
 
     private /*ZipArchive*/
@@ -52,7 +51,7 @@ class RuntimePackBuilder {
 
     /** @var ToastOptions[] */
     private /*array*/
-       $toasts = [];
+        $toasts = [];
     private $path;
     private $backgroundSlice;
 
@@ -194,7 +193,7 @@ class RuntimePackBuilder {
             $texture = $toast->getIcon()->getInPackUsageName();
             $localFile = $toast->getIcon()->getLocalFile();
             if ($localFile !== null) {
-                $texture = self::ICON_PATH . $toast->getPlugin()->getName() . "_" . $toast->getName() . "." . pathinfo($localFile, PATHINFO_EXTENSION);
+                $texture = self::ICON_PATH . $toast->getPlugin()->getName() . "_" . $toast->getName();
             }
             $details['controls'][] = [$toast->getName() . '@' . self::ICON_COMPONENT_NAME => [
                 '$icon' => $texture,

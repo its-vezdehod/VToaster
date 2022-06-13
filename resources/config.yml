@@ -1,6 +1,6 @@
 toasts:
   default:
-    icon: textures/ui/infobulb.png
+    icon: textures/gui/newgui/ChainSquare.png
     sound: ClickSound
   error:
     # ./ equals plugin_data/VToaster/

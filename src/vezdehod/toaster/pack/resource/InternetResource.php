@@ -39,16 +39,20 @@ use const CURLOPT_TIMEOUT;
 class InternetResource implements IResource {
     //TODO: Refactor this
     private $url;
+    private $inPackName;
     private $mimes;
+    private $file;
     /**
      * @param array<string, string> $mimes mime=>extension
      */
     public function __construct(
         /*private*/ string $url,
+        /*private*/ string $inPackName,
         /*private*/ array  $mimes
         //TODO: Custom HTTP client?
     ) {
         $this->mimes = $mimes;
+        $this->inPackName = $inPackName;
         $this->url = $url;
 
     }
@@ -99,7 +103,7 @@ class InternetResource implements IResource {
                 throw new InvalidMimeTypeException("Excepted " . implode("|", array_keys($this->mimes)) . ", got $mime");
             }
             $this->file = sys_get_temp_dir() . "/" . md5($this->url) . "." . $this->mimes[$mime];
-            file_put_contents($this->file, $result->getBody());
+            file_put_contents($this->file, $body);
         } finally {
             curl_close($ch);
         }

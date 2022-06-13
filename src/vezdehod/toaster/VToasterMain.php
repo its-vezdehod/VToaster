@@ -14,10 +14,17 @@ use ReflectionClass;
 use Throwable;
 use vezdehod\toaster\pack\RuntimePackBuilder;
 use vezdehod\toaster\queue\GlobalToastQueue;
+use function array_filter;
+use function array_keys;
+use function array_search;
 use function array_shift;
+use function array_slice;
 use function count;
 use function implode;
+use function in_array;
 use function is_array;
+use function mb_strpos;
+use function mb_substr;
 use function strtolower;
 
 class VToasterMain extends PluginBase {
@@ -46,9 +53,9 @@ class VToasterMain extends PluginBase {
             $options = ToastOptions::create($this, $toast);
             if (isset($rawOptions['icon'])) {
                 $icon = $rawOptions['icon'];
-                if (str_starts_with($icon, "./")) {
+                if (mb_strpos($icon, "./") === 0) {
                     $options->fileIcon($this->getDataFolder() . mb_substr($icon, 2));
-                } else if (str_starts_with($icon, "http")) {
+                } else if (mb_strpos($icon, "http") === 0) {
                     $options->downloadIcon($icon);
                 } else {
                     $options->defaultIcon($icon);
@@ -101,12 +108,12 @@ class VToasterMain extends PluginBase {
         }, $this);
     }
 
-    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool {
+    public function onCommand(CommandSender $sender, Command $command, $label, array $args): bool {
         if (count($args) < 4) {
             return false;
         }
 
-        $target = $this->getServer()->getPlayerByPrefix(array_shift($args));
+        $target = $this->getServer()->getPlayer(array_shift($args));
         if ($target === null) {
             $sender->sendMessage("Player not found!");
             return true;
@@ -121,7 +128,7 @@ class VToasterMain extends PluginBase {
 
         $silent = in_array("-s", $args, true);
         $immediately = in_array("-n", $args, true);
-        $args = array_filter($args, static fn($arg) => $arg !== "-s" && $arg !== "-n");
+        $args = array_filter($args, static function($arg) {return $arg !== "-s" && $arg !== "-n";});
         $messageIdx = array_search("-m", $args, true);
         if ($messageIdx === false) {
             return false;
