@@ -8,5 +8,9 @@ interface IResource {
     /**
      * @throws Exception
      */
-    public function resolveLocalResource(): ?LocalResource;
+    public function fetch(): void;
+
+    public function getLocalFile(): ?string;
+
+    public function getInPackUsageName(): string;
 }

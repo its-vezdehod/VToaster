@@ -27,7 +27,7 @@ class Toast {
     }
 
     public function send(Player $player, string $header, string $message): void {
-        $this->sendSilent($player, $message, $header);
+        $this->sendSilent($player, $header, $message);
         $pos = $player->getPosition();
         $player->getNetworkSession()->sendDataPacket(PlaySoundPacket::create($this->sound, $pos->x, $pos->y, $pos->z, 1, 1));
     }

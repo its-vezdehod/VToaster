@@ -1,10 +1,10 @@
 <?php
 
-namespace vezdehod\toaster\pack\resource\resolver;
+namespace vezdehod\toaster\pack\resource;
 
 use pocketmine\utils\Internet;
 use pocketmine\utils\InternetException;
-use vezdehod\toaster\pack\resource\resolver\exception\InvalidMimeTypeException;
+use vezdehod\toaster\pack\resource\exception\InvalidMimeTypeException;
 use function array_keys;
 use function explode;
 use function file_put_contents;
@@ -14,20 +14,20 @@ use function stripos;
 use function strtolower;
 use function sys_get_temp_dir;
 
-class InternetResourceResolver implements IResourceResolver {
+class InternetResource implements IResource {
+    //TODO: Refactor this
 
-    /**
-     * @param array<string, string> $mimes mime=>extension
-     */
+    private string $file;
+
     public function __construct(
         private string $url,
+        private string $inPackName,
         private array  $mimes,
         //TODO: Custom HTTP client?
     ) {
-
     }
 
-    public function resolve(): string {
+    public function fetch(): void {
         $result = Internet::getURL($this->url);
         if ($result === null) {
             throw new InternetException("Failed to fetch resource " . $this->url);
@@ -45,8 +45,15 @@ class InternetResourceResolver implements IResourceResolver {
         if (!isset($this->mimes[$mime = strtolower($mime)])) {
             throw new InvalidMimeTypeException("Excepted " . implode("|", array_keys($this->mimes)) . ", got $mime");
         }
-        $fileName = sys_get_temp_dir() . "/" . md5($this->url) . "." . $this->mimes[$mime];
-        file_put_contents($fileName, $result->getBody());
-        return $fileName;
+        $this->file = sys_get_temp_dir() . "/" . md5($this->url) . "." . $this->mimes[$mime];
+        file_put_contents($this->file, $result->getBody());
+    }
+
+    public function getLocalFile(): ?string {
+        return $this->file;
+    }
+
+    public function getInPackUsageName(): string {
+        return $this->inPackName;
     }
 }

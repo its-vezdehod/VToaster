@@ -14,10 +14,14 @@ use ReflectionClass;
 use Throwable;
 use vezdehod\toaster\pack\RuntimePackBuilder;
 use vezdehod\toaster\queue\GlobalToastQueue;
+use function array_filter;
 use function array_keys;
+use function array_search;
 use function array_shift;
+use function array_slice;
+use function count;
 use function implode;
-use function is_array;
+use function in_array;
 use function mb_substr;
 use function str_starts_with;
 use function strtolower;
@@ -40,7 +44,7 @@ class VToasterMain extends PluginBase {
         $this->saveResource("error.png");
 
         $this->queue = new GlobalToastQueue();
-        ToastFactory::setFactory(fn(ToastOptions $options) => new Toast($options->getSound()->getName(), $options->getFlag(), $this->queue));
+        ToastFactory::setFactory(fn(ToastOptions $options) => new Toast($options->getSound()->getInPackUsageName(), $options->getFlag(), $this->queue));
 
         foreach ($this->getConfig()->get("toasts") as $toast => $rawOptions) {
             $options = ToastOptions::create($this, $toast);
@@ -113,38 +117,23 @@ class VToasterMain extends PluginBase {
         }
 
 
-        $message = null;
-        $silent = false;
-        $immediately = false;
-        foreach ($args as $i => $arg) {
-            if ($arg === "-s") {
-                $silent = true;
-                unset($args[$i]);
-            } else if ($arg === "-n") {
-                $immediately = true;
-                unset($args[$i]);
-            } else if ($arg === "-m") {
-                $message = [];
-                unset($args[$i]);
-            } else if (is_array($message)) {
-                $message[] = $arg;
-                unset($args[$i]);
-            }
-        }
-
-        if ($message === null) {
+        $silent = in_array("-s", $args, true);
+        $immediately = in_array("-n", $args, true);
+        $args = array_filter($args, static fn($arg) => $arg !== "-s" && $arg !== "-n");
+        $messageIdx = array_search("-m", $args, true);
+        if ($messageIdx === false) {
             return false;
         }
+        $header = implode(" ", array_slice($args, 0, $messageIdx));
+        $message = implode(" ", array_slice($args, $messageIdx + 1));
 
-        $header = implode(" ", $args);
-        $message = implode(" ", $message);
         match (true) {
             $silent && $immediately => $toast->sendSilent($target, $header, $message),
             $silent && !$immediately => $toast->enqueueSilent($target, $header, $message),
             !$silent && $immediately => $toast->send($target, $header, $message),
             !$silent && !$immediately => $toast->enqueue($target, $header, $message)
         };
-        $sender->sendMessage("Toast successfully " . ($immediately ? "sent" : "enqueued")  . " to {$target->getName()} " . ($silent ? "(without sound)" : ""));
+        $sender->sendMessage("Toast successfully " . ($immediately ? "sent" : "enqueued") . " to {$target->getName()} " . ($silent ? "(without sound)" : ""));
         return true;
     }
 
