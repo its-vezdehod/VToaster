@@ -15,11 +15,16 @@ depend:
 ```
 
 ```php
-private Toast $achievementsToast;
+use vezdehod\toaster\ToastFactory;
+use vezdehod\toaster\ToastOptions;
+use pocketmine\level\sound\ClickSound;
 
-protected function onLoad(): void {
+
+private $achievementsToast;
+
+public function onLoad() {
     $this->achievementsToast = ToastFactory::create(ToastOptions::create($this, 'achievements')
-            ->downloadSound("https://static.wikia.nocookie.net/geometry-dash/images/1/18/AchievementTone.ogg")
+            ->downloadIcon("https://cdn-icons-png.flaticon.com/128/3135/3135728.png")
             ->soundOf(ClickSound::class));
 }
 // And show it to player
